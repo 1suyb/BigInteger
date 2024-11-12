@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Text;
 
 
@@ -18,6 +19,20 @@ public class BigIntegerUnit
 	}
 
 	public bool IsNegative => (_value[Count - 1] & MostSignificantBit) == MostSignificantBit;
+	public bool IsZero
+	{
+		get
+		{
+			for (int i = 0; i < Count; i++)
+			{
+				if (Value[i] != 0)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
 
 	public static readonly byte FullBit;
 	public static readonly byte MostSignificantBit;
@@ -233,6 +248,18 @@ public class BigIntegerUnit
 	{
 		BigIntegerUnit leftSideUnit = new BigIntegerUnit(leftSide);
 		return leftSideUnit * rightSide;
+	}
+
+
+
+	public static BigIntegerUnit
+
+
+	private static byte[] CopyArrayFrom(BigIntegerUnit unit)
+	{
+		byte[] result = new byte[unit.Count];
+		Array.Copy(unit.Value, 0, result, 0, unit.Count);
+		return result;
 	}
 
 
