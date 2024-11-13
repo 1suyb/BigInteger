@@ -227,6 +227,7 @@ public class BigIntegerUnit
 		}
 		return result;
 	}
+	
 	public static BigIntegerUnit operator +(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
 	{
 		int length = (int)MathF.Max(leftSide.Count, rightSide.Count);
@@ -251,6 +252,7 @@ public class BigIntegerUnit
 		}
 		return new BigIntegerUnit(result);
 	}
+	
 	public static BigIntegerUnit operator +(BigIntegerUnit leftSide, int rightSide)
 	{
 		BigIntegerUnit rightSideUnit = new BigIntegerUnit(rightSide);
@@ -474,6 +476,11 @@ public class BigIntegerUnit
 		{
 			throw new ArgumentNullException("value");
 		}
+		bool isNegative = value.IsNegative;
+		if (value.IsNegative)
+		{
+			value = -value;
+		}
 		int result = 0;
 		int temp = 0;
 		for (int i = 0; i < 32/BytePerBit; i++)
@@ -489,7 +496,7 @@ public class BigIntegerUnit
 			}
 		}
 
-		return result;
+		return isNegative ? -result : result;
 	}
 	public static uint ToUInt32(BigIntegerUnit value)
 	{
@@ -521,6 +528,11 @@ public class BigIntegerUnit
 		{
 			throw new ArgumentNullException("value");
 		}
+		bool isNegative = value.IsNegative;
+		if (value.IsNegative)
+		{
+			value = -value;
+		}
 		long result = 0;
 		long temp = 0;
 		for (int i = 0; i < 64/BytePerBit; i++)
@@ -536,7 +548,7 @@ public class BigIntegerUnit
 			}
 		}
 
-		return result;
+		return isNegative ? -result : result;
 	}
 	public static ulong ToUInt64(BigIntegerUnit value)
 	{
