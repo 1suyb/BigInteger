@@ -252,7 +252,38 @@ public class BigIntegerUnit
 
 
 
-	public static BigIntegerUnit
+	public static bool operator >(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
+	{
+		BigIntegerUnit result = leftSide-rightSide;
+		if (result.IsNegative)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+	public static bool operator <(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
+	{
+		BigIntegerUnit result = leftSide - rightSide;
+		if (result.IsNegative)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	public static bool operator >=(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
+	{
+		return !(leftSide < rightSide);
+	}
+	public static bool operator <=(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
+	{
+		return !(rightSide > leftSide);
+	}
 
 
 	private static byte[] CopyArrayFrom(BigIntegerUnit unit)
