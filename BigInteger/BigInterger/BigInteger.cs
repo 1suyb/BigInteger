@@ -143,14 +143,27 @@ public class BigIntegerUnit
 		}
 	}
 
-	private static int GetHighestBitPosition(byte value)
+	private static int GetHighestBitPosition(byte[] value)
 	{
-		int position = 0;
-		while (value > 0)
+		int noZeroIndex = 0;
+		for (int i = value.Length-1 ; i >=0 ; i--)
 		{
-			value >>= 1;
+			if(value[i] != 0)
+			{
+				noZeroIndex = i;
+				break;
+			}
+		}
+
+		int position = 0;
+		byte b = value[noZeroIndex];
+		while (b > 0)
+		{
+			b >>= 1;
 			position++;
 		}
+
+		position += (noZeroIndex + 1) * BigIntegerUnit.BytePerBit;
 		return position;
 	}
 	private static byte[] TrimZeros(byte[] onlyPositiveArray)
@@ -282,41 +295,33 @@ public class BigIntegerUnit
 
 	public static BigIntegerUnit operator /(BigIntegerUnit dividend, BigIntegerUnit divisor)
 	{
-		// 이 블록은 나눗셈에서 나누는 값이 0인지 확인하고, 0으로 나누는 것을 방지하기 위해 DivideByZeroException을 발생시킵니다.
 		if (divisor.IsZero)
 		{
 			throw new DivideByZeroException("Cannot divide by zero.");
 		}
-		// 이 블록은 나누어지는 값이 0인지 확인하고, 그 경우 결과가 0임을 반환합니다.
 		if (dividend.IsZero)
 		{
 			return new BigIntegerUnit(0);
 		}
 		
-		// 이 라인은 나누어지는 값과 나누는 값의 부호를 비교하여 결과가 음수인지 여부를 결정합니다.
 		bool isNegativeResult = dividend.IsNegative != divisor.IsNegative;
 
-		// 이 라인은 나누어지는 값이 음수인 경우 절대값을 얻기 위해 이를 음수로 만듭니다.
 		BigIntegerUnit absDividend = dividend.IsNegative ? -dividend : dividend;
 		BigIntegerUnit absDivisor = divisor.IsNegative ? -divisor : divisor;
 
-		// 만약 절대값으로 나누는 값이 나누어지는 값보다 크다면, 몫은 0입니다. 나누는 값이 나누어지는 값에 맞지 않기 때문입니다.
 		if (absDivisor > absDividend)
 		{
 			return new BigIntegerUnit(0);
 		}
 
-		// 이 라인은 몫을 0으로 초기화합니다. 나눗셈의 결과를 축적하기 위해 사용됩니다.
 		BigIntegerUnit quotient = new BigIntegerUnit(0);
-
-		// 이 라인은 나머지를 나누어지는 값의 절대값으로 초기화합니다. 나눗셈 과정에서 계속해서 뺄셈을 수행하기 위해 사용됩니다.
 		BigIntegerUnit remainder = new BigIntegerUnit(absDividend);
 
 		// 이 라인은 나누어지는 값과 나누는 값의 비트 길이 차이를 계산하여, 처음에 나누는 값을 얼마나 왼쪽으로 이동시킬지 결정합니다.
-		int dividendHighestBit = GetHighestBitPosition(absDividend.Value[^1]); // 가장 마지막 바이트에서 가장 높은 비트 위치를 구함
-		int divisorHighestBit = GetHighestBitPosition(absDivisor.Value[^1]); // 가장 마지막 바이트에서 가장 높은 비트 위치를 구함
+		int dividendHighestBit = GetHighestBitPosition(absDividend.Value); // 가장 마지막 바이트에서 가장 높은 비트 위치를 구함
+		int divisorHighestBit = GetHighestBitPosition(absDivisor.Value); // 가장 마지막 바이트에서 가장 높은 비트 위치를 구함
 
-		int bitLengthDifference = (absDividend.Count - absDivisor.Count) * 8 + (dividendHighestBit - divisorHighestBit);
+		int bitLengthDifference = dividendHighestBit - divisorHighestBit;
 
 
 		// 이 라인은 나누는 값을 비트 길이 차이만큼 왼쪽으로 이동시켜 나누어지는 값의 최상위 비트와 정렬합니다.
@@ -329,7 +334,7 @@ public class BigIntegerUnit
 			while(shiftedDivisor <= remainder)
 			{
 				remainder -= shiftedDivisor;
-				quotient += new BigIntegerUnit(1) << i;
+				quotient += (new BigIntegerUnit(1) << i);
 			}
 			// 이 라인은 다음 반복을 위해 나누는 값을 오른쪽으로 한 비트 이동시킵니다.
 			shiftedDivisor = shiftedDivisor >> 1;
@@ -430,7 +435,7 @@ public class BigIntegerUnit
 	}
 	public static BigIntegerUnit LeftShift(byte[] byteArray, int shiftAmount)
 	{
-		int bitLength =( byteArray.Length-1) * 8+ GetHighestBitPosition(byteArray[byteArray.Length-1]);
+		int bitLength = GetHighestBitPosition(byteArray);
 
 		if (shiftAmount == 0)
 		{

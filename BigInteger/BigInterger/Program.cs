@@ -14,17 +14,17 @@ namespace BigInterger
 				Console.WriteLine(binaryString);
 			}
 			Console.WriteLine("==============================");
-			BigIntegerUnit unit2 = new BigIntegerUnit(123456789);
-			BigIntegerUnit unit3 = new BigIntegerUnit(10);
-			BigInteger cshparBigInteger1 = new BigInteger(123456789);
-			BigInteger cshparBigInteger2 = new BigInteger(10);
+			BigIntegerUnit unit2 = new BigIntegerUnit(255255255255);
+			BigIntegerUnit unit3 = new BigIntegerUnit(255255);
+			BigInteger cshparBigInteger1 = new BigInteger(255255255255);
+			BigInteger cshparBigInteger2 = new BigInteger(255255);
 			Console.WriteLine(unit2.ToString());
 			Console.WriteLine(unit3.ToString());
 			Console.WriteLine(cshparBigInteger1.ToString("X"));
 			Console.WriteLine(cshparBigInteger2.ToString("X"));
-			Console.WriteLine("============곱셈==================");
-			Console.WriteLine((unit2*unit3).ToString());
-			Console.WriteLine((cshparBigInteger1*cshparBigInteger2).ToString("X"));
+			Console.WriteLine("============나눗셈==================");
+			Console.WriteLine((unit2/unit3).ToString());
+			Console.WriteLine((cshparBigInteger1/cshparBigInteger2).ToString("X"));
 			Console.WriteLine("============string==================");
 			BigIntegerUnit unit5 = new BigIntegerUnit("-1234567981234567913245679");
 			Console.WriteLine(unit5.ToString());
