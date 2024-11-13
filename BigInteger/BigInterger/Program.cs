@@ -7,14 +7,9 @@ namespace BigInterger
 	{
 		static void Main(string[] args)
 		{
-			byte[] bytes = new byte[] { 0b11111111, 0b11110000, 0b00000000 };
-			foreach (var item in bytes)
-			{
-				string binaryString = Convert.ToString(item, 2).PadLeft(8, '0'); // 2진수 문자열로 변환 (8비트 패딩)
-				Console.WriteLine(binaryString);
-			}
+
 			Console.WriteLine("==============================");
-			BigIntegerUnit unit2 = new BigIntegerUnit(255255255255);
+			BigIntegerUnit unit2 = new BigIntegerUnit("-1231321465431874968546847698476847683547684786476897687987654");
 			BigIntegerUnit unit3 = new BigIntegerUnit(255);
 			BigInteger cshparBigInteger1 = new BigInteger(255255255255);
 			BigInteger cshparBigInteger2 = new BigInteger(255);
