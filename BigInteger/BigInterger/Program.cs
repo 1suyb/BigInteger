@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 
 namespace BigInterger
 {
@@ -13,20 +14,30 @@ namespace BigInterger
 				Console.WriteLine(binaryString);
 			}
 			Console.WriteLine("==============================");
-			Console.WriteLine(sizeof(int));
-			BigIntegerUnit unit2 = new BigIntegerUnit(2000);
+			BigIntegerUnit unit2 = new BigIntegerUnit(123456789);
+			BigIntegerUnit unit3 = new BigIntegerUnit(10);
+			BigInteger cshparBigInteger1 = new BigInteger(123456789);
+			BigInteger cshparBigInteger2 = new BigInteger(10);
 			Console.WriteLine(unit2.ToString());
-			Console.WriteLine(BigIntegerUnit.ToTwosComplement(unit2).ToString());
-			BigIntegerUnit unit3 = new BigIntegerUnit(4000);
 			Console.WriteLine(unit3.ToString());
-			Console.WriteLine("==============================");
-
-			BigIntegerUnit unit4 = new BigIntegerUnit("1");
-			Console.WriteLine(unit4.ToString());
-			BigIntegerUnit unit5 = new BigIntegerUnit("-01");
+			Console.WriteLine(cshparBigInteger1.ToString("X"));
+			Console.WriteLine(cshparBigInteger2.ToString("X"));
+			Console.WriteLine("============곱셈==================");
+			Console.WriteLine((unit2*unit3).ToString());
+			Console.WriteLine((cshparBigInteger1*cshparBigInteger2).ToString("X"));
+			Console.WriteLine("============string==================");
+			BigIntegerUnit unit5 = new BigIntegerUnit("-1234567981234567913245679");
 			Console.WriteLine(unit5.ToString());
-
-			Console.WriteLine((unit2 * unit3).ToString());
+			BigInteger cshparBigInteger5 = BigInteger.Parse("-1234567981234567913245679");
+			Console.WriteLine(cshparBigInteger5.ToString("X"));
+			Console.WriteLine("==============대소비교================");
+			Console.WriteLine((unit2>unit3));
+			Console.WriteLine((unit2<unit3));
+			Console.WriteLine((unit2>=unit3));
+			Console.WriteLine((unit2<=unit3));
+			Console.WriteLine((unit2==unit3));
+			Console.WriteLine((unit2!=unit3));
+			Console.WriteLine("==============================");
 		}
 	}
 }

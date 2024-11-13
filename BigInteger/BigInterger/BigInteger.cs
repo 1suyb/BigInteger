@@ -3,7 +3,6 @@ using System.Collections;
 using System.Text;
 
 
-
 public class BigIntegerUnit
 {
 	private byte[] _value;
@@ -36,7 +35,7 @@ public class BigIntegerUnit
 
 	public static readonly byte FullBit;
 	public static readonly byte MostSignificantBit;
-	public int BitLength => _value.Length * 8;
+	public int BitLength => _value.Length* 8;
 	public const int BytePerBit = 8;
 
 	static BigIntegerUnit()
@@ -79,6 +78,7 @@ public class BigIntegerUnit
 		{
 			_value[i] = (byte)(value >> BytePerBit * i);
 		}
+		_value = TrimZeros(_value);
 		if (isNagtive) _value = ToTwosComplement(_value).Value;
 	}
 
@@ -90,6 +90,8 @@ public class BigIntegerUnit
 		{
 			_value[i] = (byte)(value >> BytePerBit * i);
 		}
+
+		_value = TrimZeros(_value);
 	}
 
 	public BigIntegerUnit(ulong value)
@@ -100,6 +102,8 @@ public class BigIntegerUnit
 		{
 			_value[i] = (byte)(value >> BytePerBit * i);
 		}
+
+		_value = TrimZeros(_value);
 	}
 
 	public BigIntegerUnit(string value)
@@ -120,10 +124,11 @@ public class BigIntegerUnit
 		for (int i = value.Length - 1; i >= 0; i--)
 		{
 			int num = int.Parse(value.Substring(i, 1), System.Globalization.NumberStyles.HexNumber);
-			unit += num * multiple;
+			BigIntegerUnit sum = num * multiple;
+			unit += sum;
 			multiple *= 10;
 		}
-
+		
 		byte[] positiveArray = TrimZeros(unit.Value);
 		if (isNegative)
 		{
@@ -138,27 +143,42 @@ public class BigIntegerUnit
 		}
 	}
 
-
+	private static int GetHighestBitPosition(byte value)
+	{
+		int position = 0;
+		while (value > 0)
+		{
+			value >>= 1;
+			position++;
+		}
+		return position;
+	}
 	private static byte[] TrimZeros(byte[] onlyPositiveArray)
 	{
 		int length = onlyPositiveArray.Length;
 		int noZeroIndex = 0;
+		bool isfullbit = false;
 		for (int i = length - 1; i > 0; i--)
 		{
 			if (onlyPositiveArray[i] != 0)
 			{
 				noZeroIndex = i;
+				if (onlyPositiveArray[i] == 255)
+				{
+					isfullbit = true;
+				}
 				break;
 			}
 		}
-
-		byte[] result = new byte[noZeroIndex + 2];
+		
+		byte[] result = new byte[noZeroIndex+2];
 		Array.Copy(onlyPositiveArray, 0, result, 0, noZeroIndex + 1);
 		return result;
 	}
 
 	public static BigIntegerUnit ToTwosComplement(BigIntegerUnit value)
 	{
+		
 		byte[] result = new byte[value.Count];
 		for (int i = 0; i < result.Length; i++)
 		{
@@ -208,7 +228,7 @@ public class BigIntegerUnit
 		BigIntegerUnit rightSideUnit = new BigIntegerUnit(rightSide);
 		return leftSide + rightSideUnit;
 	}
-
+	
 	public static BigIntegerUnit operator -(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
 	{
 		BigIntegerUnit right = ToTwosComplement(rightSide);
@@ -223,21 +243,31 @@ public class BigIntegerUnit
 	public static BigIntegerUnit operator *(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
 	{
 		bool isNegative = leftSide.IsNegative != rightSide.IsNegative;
+		leftSide = Abs(leftSide);
+		rightSide= Abs(rightSide);
+		
 		byte[] result = new byte[leftSide.Count + rightSide.Count];
+		int carry = 0;
 		for (int i = 0; i < leftSide.Count; i++)
 		{
-			int carry = 0;
+			int k = i;
 			for (int j = 0; j < rightSide.Count; j++)
 			{
-
-				int multiple = (leftSide.Value[i] * rightSide.Value[j]) + (int)result[i + j];
-				result[i + j] = (byte)(multiple & FullBit);
+				k = i + j;
+				int multiple = (leftSide.Value[i] * rightSide.Value[j]) + carry + result[i+j];
+				result[i+j] = (byte)(multiple);
 				carry = (multiple >> BytePerBit);
-				result[i + j + 1] = (byte)carry;
 			}
+			while (carry>0)
+			{
+				k++;
+				result[k] = (byte)(carry);
+				carry = (carry >> BytePerBit);
+			}
+			
 		}
-		result = TrimZeros(result);
-		return isNegative ? -new BigIntegerUnit(result) : new BigIntegerUnit(result);
+		byte[] output = TrimZeros(result);
+		return isNegative ? -new BigIntegerUnit(output) : new BigIntegerUnit(output);
 	}
 	public static BigIntegerUnit operator *(BigIntegerUnit leftSide, int rightSide)
 	{
@@ -250,12 +280,69 @@ public class BigIntegerUnit
 		return leftSideUnit * rightSide;
 	}
 
+	public static BigIntegerUnit operator /(BigIntegerUnit dividend, BigIntegerUnit divisor)
+	{
+		// 이 블록은 나눗셈에서 나누는 값이 0인지 확인하고, 0으로 나누는 것을 방지하기 위해 DivideByZeroException을 발생시킵니다.
+		if (divisor.IsZero)
+		{
+			throw new DivideByZeroException("Cannot divide by zero.");
+		}
+		// 이 블록은 나누어지는 값이 0인지 확인하고, 그 경우 결과가 0임을 반환합니다.
+		if (dividend.IsZero)
+		{
+			return new BigIntegerUnit(0);
+		}
+		
+		// 이 라인은 나누어지는 값과 나누는 값의 부호를 비교하여 결과가 음수인지 여부를 결정합니다.
+		bool isNegativeResult = dividend.IsNegative != divisor.IsNegative;
 
+		// 이 라인은 나누어지는 값이 음수인 경우 절대값을 얻기 위해 이를 음수로 만듭니다.
+		BigIntegerUnit absDividend = dividend.IsNegative ? -dividend : dividend;
+		BigIntegerUnit absDivisor = divisor.IsNegative ? -divisor : divisor;
+
+		// 만약 절대값으로 나누는 값이 나누어지는 값보다 크다면, 몫은 0입니다. 나누는 값이 나누어지는 값에 맞지 않기 때문입니다.
+		if (absDivisor > absDividend)
+		{
+			return new BigIntegerUnit(0);
+		}
+
+		// 이 라인은 몫을 0으로 초기화합니다. 나눗셈의 결과를 축적하기 위해 사용됩니다.
+		BigIntegerUnit quotient = new BigIntegerUnit(0);
+
+		// 이 라인은 나머지를 나누어지는 값의 절대값으로 초기화합니다. 나눗셈 과정에서 계속해서 뺄셈을 수행하기 위해 사용됩니다.
+		BigIntegerUnit remainder = new BigIntegerUnit(absDividend);
+
+		// 이 라인은 나누어지는 값과 나누는 값의 비트 길이 차이를 계산하여, 처음에 나누는 값을 얼마나 왼쪽으로 이동시킬지 결정합니다.
+		int dividendHighestBit = GetHighestBitPosition(absDividend.Value[^1]); // 가장 마지막 바이트에서 가장 높은 비트 위치를 구함
+		int divisorHighestBit = GetHighestBitPosition(absDivisor.Value[^1]); // 가장 마지막 바이트에서 가장 높은 비트 위치를 구함
+
+		int bitLengthDifference = (absDividend.Count - absDivisor.Count) * 8 + (dividendHighestBit - divisorHighestBit);
+
+
+		// 이 라인은 나누는 값을 비트 길이 차이만큼 왼쪽으로 이동시켜 나누어지는 값의 최상위 비트와 정렬합니다.
+		BigIntegerUnit shiftedDivisor = absDivisor << bitLengthDifference;
+
+		// 이 반복문은 비트 길이 차이에서 0까지 반복하여, 나누는 값을 오른쪽으로 이동시키면서 나눗셈을 수행합니다.
+		for (int i = bitLengthDifference; i >= 0; i--)
+		{
+			// 이 조건문은 이동된 나누는 값이 나머지보다 작거나 같으면, 나머지에서 이를 빼고 몫에 해당하는 2의 거듭제곱 값을 더합니다.
+			while(shiftedDivisor <= remainder)
+			{
+				remainder -= shiftedDivisor;
+				quotient += new BigIntegerUnit(1) << i;
+			}
+			// 이 라인은 다음 반복을 위해 나누는 값을 오른쪽으로 한 비트 이동시킵니다.
+			shiftedDivisor = shiftedDivisor >> 1;
+		}
+
+		// 이 라인은 나누어지는 값과 나누는 값의 부호에 따라 결과를 음수로 만들지 여부를 결정하여 몫을 반환합니다.
+		return isNegativeResult ? -quotient : quotient;
+	}
 
 	public static bool operator >(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
 	{
 		BigIntegerUnit result = leftSide-rightSide;
-		if (result.IsNegative)
+		if (result.IsNegative || result.IsZero)
 		{
 			return false;
 		}
@@ -282,9 +369,38 @@ public class BigIntegerUnit
 	}
 	public static bool operator <=(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
 	{
-		return !(rightSide > leftSide);
+		return !(leftSide > rightSide);
 	}
 
+	public static bool operator ==(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
+	{
+		if (object.ReferenceEquals(leftSide, null) && object.ReferenceEquals(rightSide, null))
+		{
+			return true;
+		}
+		else if (object.ReferenceEquals(leftSide, null) || object.ReferenceEquals(rightSide, null))
+		{
+			return false;
+		}
+		else
+		{
+			return (leftSide-rightSide).IsZero;
+		}
+	}
+	public static bool operator !=(BigIntegerUnit leftSide, BigIntegerUnit rightSide)
+	{
+		return !(leftSide == rightSide);
+	}
+
+	public static BigIntegerUnit Abs(BigIntegerUnit value)
+	{
+		if (value.IsNegative)
+		{
+			return -value;
+		}
+
+		return value;
+	}
 
 	private static byte[] CopyArrayFrom(BigIntegerUnit unit)
 	{
@@ -314,7 +430,7 @@ public class BigIntegerUnit
 	}
 	public static BigIntegerUnit LeftShift(byte[] byteArray, int shiftAmount)
 	{
-		int bitLength = byteArray.Length * 8;
+		int bitLength =( byteArray.Length-1) * 8+ GetHighestBitPosition(byteArray[byteArray.Length-1]);
 
 		if (shiftAmount == 0)
 		{
@@ -356,6 +472,10 @@ public class BigIntegerUnit
 		}
 		int newBitLength = bitLength - shiftAmount;
 		int newByteLength = (newBitLength + 7) / 8;
+		if (newByteLength < 0)
+		{
+			return new BigIntegerUnit(0);
+		}
 		byte[] shiftedBytes = new byte[newByteLength];
 
 		int byteShift = shiftAmount / 8;
@@ -383,15 +503,10 @@ public class BigIntegerUnit
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < Count; i++)
 		{
-			sb.Append($"{_value[i]} ");
+			sb.Append($"{_value[i].ToString("X")} ");
 		}
 		return sb.ToString();
 	}
 
 }
 
-
-public class BigInteger
-{
-
-}
